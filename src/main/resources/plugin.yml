@@ -1,0 +1,16 @@
+name: HubSystem
+version: '1.0'
+main: net.letstim.hubSystem.HubSystem
+api-version: '1.21'
+
+commands:
+  timezone:
+    description: Zeigt die aktuelle Zeit und verwaltet die Zeitzone
+    usage: /<command> [reload|<timezone>]
+    aliases: [tz]
+
+permissions:
+  hubsystem.timezone.admin:
+    description: Erlaubt Admin-Befehle für RealTime
+    default: op
+
