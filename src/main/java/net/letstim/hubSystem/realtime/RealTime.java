@@ -10,6 +10,7 @@ public class RealTime {
     private final HubSystem plugin;
     private final RealTimeConfig config;
     private WorldTimeSync worldTimeSync;
+    private NewYearFirework newYearFirework;
 
     public RealTime() {
         instance = this;
@@ -18,18 +19,26 @@ public class RealTime {
 
         registerCommand();
         startSync();
+        startNewYearFirework();
     }
 
     private void registerCommand() {
-        PluginCommand cmd = plugin.getCommand("timezone");
-        if (cmd == null) {
+        PluginCommand timezoneCmd = plugin.getCommand("timezone");
+        if (timezoneCmd == null) {
             plugin.getLogger().severe("Command 'timezone' not found in plugin.yml!");
-            return;
+        } else {
+            TimezoneCommand executor = new TimezoneCommand(this);
+            timezoneCmd.setExecutor(executor);
+            timezoneCmd.setTabCompleter(executor);
         }
 
-        TimezoneCommand executor = new TimezoneCommand(this);
-        cmd.setExecutor(executor);
-        cmd.setTabCompleter(executor);
+        PluginCommand fireworkDebugCmd = plugin.getCommand("fireworkdebug");
+        if (fireworkDebugCmd == null) {
+            plugin.getLogger().severe("Command 'fireworkdebug' not found in plugin.yml!");
+        } else {
+            FireworkDebugCommand executor = new FireworkDebugCommand(this);
+            fireworkDebugCmd.setExecutor(executor);
+        }
     }
 
     private void startSync() {
@@ -58,13 +67,35 @@ public class RealTime {
         worldTimeSync = null;
     }
 
+    private void startNewYearFirework() {
+        stopNewYearFirework();
+        newYearFirework = new NewYearFirework(this);
+        newYearFirework.start();
+        plugin.getLogger().info("NewYear Firework system started.");
+    }
+
+    private void stopNewYearFirework() {
+        if (newYearFirework == null) {
+            return;
+        }
+        newYearFirework.stop();
+        newYearFirework = null;
+    }
+
     public void restartSync() {
         stopSync();
         startSync();
     }
 
+    public void startFireworkDebug() {
+        if (newYearFirework != null) {
+            newYearFirework.startDebug();
+        }
+    }
+
     public void disable() {
         stopSync();
+        stopNewYearFirework();
     }
 
     public static RealTime getInstance() {

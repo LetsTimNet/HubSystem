@@ -27,6 +27,46 @@ public class RealTimeConfig {
             return;
         }
         config = YamlConfiguration.loadConfiguration(configFile);
+        migrate();
+    }
+
+    private void migrate() {
+        boolean needsSave = false;
+
+        // Migration: Add New Year firework settings if missing
+        if (!config.contains("newyear-firework.enabled")) {
+            config.set("newyear-firework.enabled", true);
+            needsSave = true;
+        }
+        if (!config.contains("newyear-firework.center-x")) {
+            config.set("newyear-firework.center-x", 0.0);
+            needsSave = true;
+        }
+        if (!config.contains("newyear-firework.center-y")) {
+            config.set("newyear-firework.center-y", 100.0);
+            needsSave = true;
+        }
+        if (!config.contains("newyear-firework.center-z")) {
+            config.set("newyear-firework.center-z", 0.0);
+            needsSave = true;
+        }
+        if (!config.contains("newyear-firework.radius")) {
+            config.set("newyear-firework.radius", 50);
+            needsSave = true;
+        }
+        if (!config.contains("newyear-firework.spawn-interval-seconds")) {
+            config.set("newyear-firework.spawn-interval-seconds", 7);
+            needsSave = true;
+        }
+        if (!config.contains("newyear-firework.world")) {
+            config.set("newyear-firework.world", "world");
+            needsSave = true;
+        }
+
+        if (needsSave) {
+            plugin.getLogger().info("RealTime.yml migriert - Silvester-Feuerwerk Einstellungen hinzugefügt.");
+            save();
+        }
     }
 
     private void createDefault() {
@@ -35,6 +75,15 @@ public class RealTimeConfig {
 
         config.set("timezone", "Europe/Berlin");
         config.set("sync-interval-seconds", 1);
+
+        // Silvester Feuerwerk Config
+        config.set("newyear-firework.enabled", true);
+        config.set("newyear-firework.center-x", 0.0);
+        config.set("newyear-firework.center-y", 100.0);
+        config.set("newyear-firework.center-z", 0.0);
+        config.set("newyear-firework.radius", 50);
+        config.set("newyear-firework.spawn-interval-seconds", 7);
+        config.set("newyear-firework.world", "world");
 
         addTimezoneComments();
         save();
@@ -86,5 +135,33 @@ public class RealTimeConfig {
 
     public int getSyncIntervalSeconds() {
         return config.getInt("sync-interval-seconds", 1);
+    }
+
+    public boolean isNewYearFireworkEnabled() {
+        return config.getBoolean("newyear-firework.enabled", true);
+    }
+
+    public double getFireworkCenterX() {
+        return config.getDouble("newyear-firework.center-x", 0.0);
+    }
+
+    public double getFireworkCenterY() {
+        return config.getDouble("newyear-firework.center-y", 100.0);
+    }
+
+    public double getFireworkCenterZ() {
+        return config.getDouble("newyear-firework.center-z", 0.0);
+    }
+
+    public int getFireworkRadius() {
+        return config.getInt("newyear-firework.radius", 50);
+    }
+
+    public int getFireworkSpawnIntervalSeconds() {
+        return config.getInt("newyear-firework.spawn-interval-seconds", 7);
+    }
+
+    public String getFireworkWorld() {
+        return config.getString("newyear-firework.world", "world");
     }
 }
