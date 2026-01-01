@@ -8,16 +8,15 @@ commands:
     description: Zeigt die aktuelle Zeit und verwaltet die Zeitzone
     usage: /<command> [reload|<timezone>]
     aliases: [tz]
-  fireworkdebug:
-    description: Startet das Silvester-Feuerwerk fuer 1 Minute zum Testen
-    usage: /<command>
-    aliases: [fwdebug, testfeuerwerk]
+  hubdebug:
+    description: Debug-Befehle für Events
+    usage: /<command> event <start|stop|status> <eventName>
 
 permissions:
   hubsystem.timezone.admin:
     description: Erlaubt Admin-Befehle für RealTime
     default: op
-  hubsystem.firework.debug:
-    description: Erlaubt das Starten des Test-Feuerwerks
+  hubsystem.debug.event:
+    description: Erlaubt Debug-Befehle für Events
     default: op
 

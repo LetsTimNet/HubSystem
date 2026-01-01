@@ -1,28 +1,44 @@
 package net.letstim.hubSystem.realtime;
 
 import net.letstim.hubSystem.HubSystem;
+import net.letstim.hubSystem.commands.DebugEventSubcommand;
 import net.letstim.hubSystem.config.RealTimeConfig;
+import net.letstim.hubSystem.realtime.events.EventManager;
+import net.letstim.hubSystem.realtime.events.NewYearFireworkEvent;
 import org.bukkit.command.PluginCommand;
+import org.bukkit.scheduler.BukkitRunnable;
+import org.bukkit.scheduler.BukkitTask;
 
 public class RealTime {
     private static RealTime instance;
 
     private final HubSystem plugin;
     private final RealTimeConfig config;
+    private final EventManager eventManager;
     private WorldTimeSync worldTimeSync;
-    private NewYearFirework newYearFirework;
+    private BukkitTask eventCheckTask;
 
     public RealTime() {
         instance = this;
         this.plugin = HubSystem.getInstance();
         this.config = new RealTimeConfig(plugin);
+        this.eventManager = new EventManager(plugin);
 
-        registerCommand();
+        registerEvents();
+        registerCommands();
         startSync();
-        startNewYearFirework();
+        startEventScheduler();
     }
 
-    private void registerCommand() {
+    private void registerEvents() {
+        // Register New Year Firework Event
+        NewYearFireworkEvent newYearEvent = new NewYearFireworkEvent(plugin, config);
+        eventManager.registerEvent(newYearEvent);
+
+        plugin.getLogger().info("Registered " + eventManager.getEventNames().size() + " events");
+    }
+
+    private void registerCommands() {
         PluginCommand timezoneCmd = plugin.getCommand("timezone");
         if (timezoneCmd == null) {
             plugin.getLogger().severe("Command 'timezone' not found in plugin.yml!");
@@ -32,13 +48,10 @@ public class RealTime {
             timezoneCmd.setTabCompleter(executor);
         }
 
-        PluginCommand fireworkDebugCmd = plugin.getCommand("fireworkdebug");
-        if (fireworkDebugCmd == null) {
-            plugin.getLogger().severe("Command 'fireworkdebug' not found in plugin.yml!");
-        } else {
-            FireworkDebugCommand executor = new FireworkDebugCommand(this);
-            fireworkDebugCmd.setExecutor(executor);
-        }
+        // Register event subcommand with central debug command
+        DebugEventSubcommand eventSubcommand = new DebugEventSubcommand(this);
+        plugin.getDebugCommand().registerSubcommand(eventSubcommand);
+        plugin.getLogger().info("Registered 'event' debug subcommand");
     }
 
     private void startSync() {
@@ -67,19 +80,25 @@ public class RealTime {
         worldTimeSync = null;
     }
 
-    private void startNewYearFirework() {
-        stopNewYearFirework();
-        newYearFirework = new NewYearFirework(this);
-        newYearFirework.start();
-        plugin.getLogger().info("NewYear Firework system started.");
+    private void startEventScheduler() {
+        stopEventScheduler();
+
+        // Check every 60 seconds if events should be started or stopped
+        eventCheckTask = new BukkitRunnable() {
+            @Override
+            public void run() {
+                eventManager.checkSchedules();
+            }
+        }.runTaskTimer(plugin, 0L, 60 * 20L); // Every 60 seconds
+
+        plugin.getLogger().info("Event scheduler started");
     }
 
-    private void stopNewYearFirework() {
-        if (newYearFirework == null) {
-            return;
+    private void stopEventScheduler() {
+        if (eventCheckTask != null) {
+            eventCheckTask.cancel();
+            eventCheckTask = null;
         }
-        newYearFirework.stop();
-        newYearFirework = null;
     }
 
     public void restartSync() {
@@ -87,15 +106,10 @@ public class RealTime {
         startSync();
     }
 
-    public void startFireworkDebug() {
-        if (newYearFirework != null) {
-            newYearFirework.startDebug();
-        }
-    }
-
     public void disable() {
         stopSync();
-        stopNewYearFirework();
+        stopEventScheduler();
+        eventManager.stopAll();
     }
 
     public static RealTime getInstance() {
@@ -108,5 +122,9 @@ public class RealTime {
 
     public HubSystem getPlugin() {
         return plugin;
+    }
+
+    public EventManager getEventManager() {
+        return eventManager;
     }
 }
